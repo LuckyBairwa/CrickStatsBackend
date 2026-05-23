@@ -1,6 +1,6 @@
-import Player from '../models/Player.js';
+import Player from "../models/Player.js";
 
-import Match from '../models/Match.js';
+import Match from "../models/Match.js";
 
 // 😎 Add Player
 export const addPlayer = async (req, res) => {
@@ -11,10 +11,8 @@ export const addPlayer = async (req, res) => {
       success: true,
       player,
     });
-
   } catch (error) {
-
-    console.log('ADD PLAYER ERROR 😭', error);
+    console.log("ADD PLAYER ERROR 😭", error);
 
     res.status(500).json({
       success: false,
@@ -23,11 +21,9 @@ export const addPlayer = async (req, res) => {
   }
 };
 
-
 // 😎 Get All Players
 export const getPlayers = async (req, res) => {
   try {
-
     const players = await Player.find().sort({
       createdAt: -1,
     });
@@ -36,10 +32,8 @@ export const getPlayers = async (req, res) => {
       success: true,
       players,
     });
-
   } catch (error) {
-
-    console.log('GET PLAYERS ERROR 😭', error);
+    console.log("GET PLAYERS ERROR 😭", error);
 
     res.status(500).json({
       success: false,
@@ -48,17 +42,15 @@ export const getPlayers = async (req, res) => {
   }
 };
 
-
 // 😎 Get Single Player
 export const getSinglePlayer = async (req, res) => {
   try {
-
     const player = await Player.findById(req.params.id);
 
     if (!player) {
       return res.status(404).json({
         success: false,
-        message: 'Player not found',
+        message: "Player not found",
       });
     }
 
@@ -66,10 +58,8 @@ export const getSinglePlayer = async (req, res) => {
       success: true,
       player,
     });
-
   } catch (error) {
-
-    console.log('GET SINGLE PLAYER ERROR 😭', error);
+    console.log("GET SINGLE PLAYER ERROR 😭", error);
 
     res.status(500).json({
       success: false,
@@ -77,67 +67,53 @@ export const getSinglePlayer = async (req, res) => {
     });
   }
 };
-
 
 // 😎 Update Player
 export const updatePlayer = async (req, res) => {
   try {
+    const { id } = req.params;
 
-    const player = await Player.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-      },
-    );
+    const updatedPlayer = await Player.findByIdAndUpdate(id, req.body, {
+      new: true,
+    });
 
-    if (!player) {
+    if (!updatedPlayer) {
       return res.status(404).json({
         success: false,
-        message: 'Player not found',
+        message: "Player not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      player,
+      player: updatedPlayer,
     });
-
   } catch (error) {
-
-    console.log('UPDATE PLAYER ERROR 😭', error);
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
-
 
 // 😎 Delete Player
 export const deletePlayer = async (req, res) => {
   try {
-
-    const player = await Player.findByIdAndDelete(
-      req.params.id,
-    );
+    const player = await Player.findByIdAndDelete(req.params.id);
 
     if (!player) {
       return res.status(404).json({
         success: false,
-        message: 'Player not found',
+        message: "Player not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Player deleted successfully',
+      message: "Player deleted successfully",
     });
-
   } catch (error) {
-
-    console.log('DELETE PLAYER ERROR 😭', error);
+    console.log("DELETE PLAYER ERROR 😭", error);
 
     res.status(500).json({
       success: false,
@@ -145,157 +121,98 @@ export const deletePlayer = async (req, res) => {
     });
   }
 };
-export const getTopPerformers =
-  async (req, res) => {
-
+export const getTopPerformers = async (req, res) => {
   try {
-
     // 😎 Highest Runs
-    const topRuns =
-      await Player.findOne()
-        .sort({
-          runs: -1,
-        });
+    const topRuns = await Player.findOne().sort({
+      runs: -1,
+    });
 
     // 😎 Highest Wickets
-    const topWickets =
-      await Player.findOne()
-        .sort({
-          wickets: -1,
-        });
+    const topWickets = await Player.findOne().sort({
+      wickets: -1,
+    });
 
     // 😎 Highest Sixes
-    const topSixes =
-      await Player.findOne()
-        .sort({
-          sixes: -1,
-        });
+    const topSixes = await Player.findOne().sort({
+      sixes: -1,
+    });
 
     // 😎 Highest Fours
-    const topFours =
-      await Player.findOne()
-        .sort({
-          fours: -1,
-        });
+    const topFours = await Player.findOne().sort({
+      fours: -1,
+    });
 
     res.status(200).json({
-
       success: true,
 
       performers: [
-
         {
-          title:
-            'Top Scorer',
+          title: "Top Scorer",
 
-          player:
-            topRuns?.name ||
-            'N/A',
+          player: topRuns?.name || "N/A",
 
-          value: `${
-            topRuns?.runs || 0
-          } Runs`,
+          value: `${topRuns?.runs || 0} Runs`,
 
-          icon:
-            'cricket',
+          icon: "cricket",
         },
 
         {
-          title:
-            'Top Bowler',
+          title: "Top Bowler",
 
-          player:
-            topWickets?.name ||
-            'N/A',
+          player: topWickets?.name || "N/A",
 
-          value: `${
-            topWickets?.wickets ||
-            0
-          } Wickets`,
+          value: `${topWickets?.wickets || 0} Wickets`,
 
-          icon:
-            'target',
+          icon: "target",
         },
 
         {
-          title:
-            'Most Sixes',
+          title: "Most Sixes",
 
-          player:
-            topSixes?.name ||
-            'N/A',
+          player: topSixes?.name || "N/A",
 
-          value: `${
-            topSixes?.sixes || 0
-          } Sixes`,
+          value: `${topSixes?.sixes || 0} Sixes`,
 
-          icon:
-            'rocket-launch',
+          icon: "rocket-launch",
         },
 
         {
-          title:
-            'Most Fours',
+          title: "Most Fours",
 
-          player:
-            topFours?.name ||
-            'N/A',
+          player: topFours?.name || "N/A",
 
-          value: `${
-            topFours?.fours || 0
-          } Fours`,
+          value: `${topFours?.fours || 0} Fours`,
 
-          icon:
-            'lightning-bolt',
+          icon: "lightning-bolt",
         },
       ],
     });
-
   } catch (error) {
-
-    console.log(
-      'TOP PERFORMERS ERROR 😭',
-      error,
-    );
+    console.log("TOP PERFORMERS ERROR 😭", error);
 
     res.status(500).json({
-
       success: false,
 
-      message:
-        error.message,
+      message: error.message,
     });
   }
 };
 
-export const getDashboardStats =
-  async (req, res) => {
-
+export const getDashboardStats = async (req, res) => {
   try {
+    const players = await Player.find();
 
-    const players =
-      await Player.find();
+    const totalPlayers = players.length;
 
-    const totalPlayers =
-      players.length;
+    const totalRuns = players.reduce((acc, curr) => acc + (curr.runs || 0), 0);
 
-    const totalRuns =
-      players.reduce(
-        (acc, curr) =>
-          acc + (curr.runs || 0),
-        0,
-      );
+    const totalWickets = players.reduce(
+      (acc, curr) => acc + (curr.wickets || 0),
+      0,
+    );
 
-    const totalWickets =
-      players.reduce(
-        (acc, curr) =>
-          acc +
-          (curr.wickets || 0),
-        0,
-      );
-
-    const totalMatches =
-      await Match.countDocuments();
+    const totalMatches = await Match.countDocuments();
 
     res.status(200).json({
       success: true,
@@ -307,9 +224,7 @@ export const getDashboardStats =
         totalMatches,
       },
     });
-
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,

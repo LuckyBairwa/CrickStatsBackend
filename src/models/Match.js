@@ -42,9 +42,15 @@ const batterSchema = new mongoose.Schema({
       "LBW",
       "Hit Wicket",
       "Stumped",
+      "Resting",
     ],
 
     default: "Not Out",
+  },
+
+  isResting: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -184,11 +190,27 @@ const inningsSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Team",
   },
+  status: {
+    type: String,
+    enum: ["Not Started", "Live", "Completed"],
+    default: "Not Started",
+  },
 
   totalRuns: {
     type: Number,
     default: 0,
   },
+  fallOfWickets: [
+    {
+      score: Number,
+      wicket: Number,
+      batter: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Player",
+      },
+      over: String,
+    },
+  ],
 
   wickets: {
     type: Number,
@@ -199,6 +221,12 @@ const inningsSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+
+  thisOver: [
+    {
+      type: String,
+    },
+  ],
 
   extras: {
     type: Number,
@@ -215,6 +243,11 @@ const inningsSchema = new mongoose.Schema({
   },
 
   currentBowler: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Player",
+  },
+
+  lastBowler: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Player",
   },
@@ -259,9 +292,8 @@ const matchSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["Upcoming", "Live", "Completed"],
-
-      default: "Upcoming",
+      enum: ["Not Started", "Live", "Completed"],
+      default: "Not Started",
     },
 
     currentInnings: {
@@ -269,12 +301,23 @@ const matchSchema = new mongoose.Schema(
       default: 1,
     },
 
+    target: {
+      type: Number,
+      default: 0,
+    },
+
     innings1: inningsSchema,
 
     innings2: inningsSchema,
 
     winner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team",
+    },
+
+    resultType: {
       type: String,
+      enum: ["Runs", "Wickets", "Tie", "No Result"],
       default: "",
     },
 
@@ -287,6 +330,12 @@ const matchSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    matchEvents: [
+      {
+        type: Object,
+      },
+    ],
 
     // 📅 Match Date
     matchDate: {

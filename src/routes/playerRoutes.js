@@ -24,7 +24,7 @@ router.get('/:id', getSinglePlayer);
 
 
 // ✅ Update Player
-router.put('/:id', updatePlayer);
+router.put('/update-player/:id', updatePlayer);
 
 
 // ✅ Delete Player
