@@ -6,6 +6,7 @@ import {
   getSinglePlayer,
   updatePlayer,
   deletePlayer,
+  updatePlayersAfterMatch ,
 } from '../controllers/playerController.js';
 
 const router = express.Router();
@@ -13,6 +14,8 @@ const router = express.Router();
 
 // ✅ Add Player
 router.post('/', addPlayer);
+
+router.put('/update-after-match', updatePlayersAfterMatch);
 
 
 // ✅ Get All Players

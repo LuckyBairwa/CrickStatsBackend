@@ -98,16 +98,6 @@ const overBallSchema = new mongoose.Schema({
 
   ball: Number,
 
-  batsman: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Player",
-  },
-
-  bowler: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Player",
-  },
-
   runs: Number,
   totalRuns: Number,
 
@@ -159,28 +149,6 @@ const inningsSchema = new mongoose.Schema({
     default: 0,
   },
 
-  currentPartnership: {
-    runs: {
-      type: Number,
-      default: 0,
-    },
-
-    balls: {
-      type: Number,
-      default: 0,
-    },
-
-    batter1: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Player",
-    },
-
-    batter2: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Player",
-    },
-  },
-
   battingTeam: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Team",
@@ -200,17 +168,6 @@ const inningsSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  fallOfWickets: [
-    {
-      score: Number,
-      wicket: Number,
-      batter: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Player",
-      },
-      over: String,
-    },
-  ],
 
   wickets: {
     type: Number,
@@ -222,37 +179,10 @@ const inningsSchema = new mongoose.Schema({
     default: 0,
   },
 
-  thisOver: [
-    {
-      type: String,
-    },
-  ],
-
   extras: {
     type: Number,
     default: 0,
   },
-  currentStriker: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Player",
-  },
-
-  currentNonStriker: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Player",
-  },
-
-  currentBowler: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Player",
-  },
-
-  lastBowler: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Player",
-  },
-
-  partnerships: [partnershipSchema],
 
   batters: [batterSchema],
 
@@ -296,11 +226,6 @@ const matchSchema = new mongoose.Schema(
       default: "Not Started",
     },
 
-    currentInnings: {
-      type: Number,
-      default: 1,
-    },
-
     target: {
       type: Number,
       default: 0,
@@ -315,43 +240,15 @@ const matchSchema = new mongoose.Schema(
       ref: "Team",
     },
 
-    resultType: {
-      type: String,
-      enum: ["Runs", "Wickets", "Tie", "No Result", ""],
-      default: "",
-    },
-
     result: {
       type: String,
       default: "",
     },
 
-    wonBy: {
-      type: String,
-      default: "",
-    },
-
-    matchEvents: [
-      {
-        type: Object,
-      },
-    ],
-
     // 📅 Match Date
     matchDate: {
       type: Date,
       default: Date.now,
-    },
-
-    // 🕒 Match Time
-    matchTime: {
-      type: String,
-      default: "",
-    },
-
-    venue: {
-      type: String,
-      default: "Home Ground",
     },
   },
 

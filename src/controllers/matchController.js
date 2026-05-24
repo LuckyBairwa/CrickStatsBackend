@@ -102,6 +102,11 @@ export const getMatches = async (req, res) => {
     const matches = await Match.find()
       .populate("teamA")
       .populate("teamB")
+      .populate("winner")
+      .populate("innings1.battingTeam")
+      .populate("innings1.bowlingTeam")
+      .populate("innings2.battingTeam")
+      .populate("innings2.bowlingTeam")
       .sort({ createdAt: -1 });
 
     res.status(200).json({

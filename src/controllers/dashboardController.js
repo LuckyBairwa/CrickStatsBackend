@@ -3,32 +3,32 @@ import Match from "../models/Match.js";
 
 export const getTopPerformers = async (req, res) => {
   try {
+    const topRuns = await Player.findOne({
+      ballsPlayed: { $gt: 0 },
+    }).sort({ runs: -1 });
 
-    const topRuns = await Player.findOne().sort({
-      runs: -1,
-    });
+    const topWickets = await Player.findOne({
+      oversBowled: { $gt: 0 },
+      wickets: { $gt: 0 },
+    }).sort({ wickets: -1 });
 
-    const topWickets = await Player.findOne().sort({
-      wickets: -1,
-    });
+    const topSixes = await Player.findOne({
+      ballsPlayed: { $gt: 0 },
+    }).sort({ sixes: -1 });
 
-    const topSixes = await Player.findOne().sort({
-      sixes: -1,
-    });
+    const topFours = await Player.findOne({
+      ballsPlayed: { $gt: 0 },
+    }).sort({ fours: -1 });
 
-    const topFours = await Player.findOne().sort({
-      fours: -1,
-    });
+    const bestEconomy = await Player.findOne({
+      oversBowled: { $gt: 0 },
+      economy: { $gt: 0 },
+    }).sort({ economy: 1 });
 
-    // 😎 Best Economy
-    const bestEconomy = await Player.findOne().sort({
-      economy: 1,
-    });
-
-    // 😎 Most Dot Balls
-    const mostDotBalls = await Player.findOne().sort({
-      dotBalls: -1,
-    });
+    const mostDotBalls = await Player.findOne({
+      oversBowled: { $gt: 0 },
+      dotBalls: { $gt: 0 },
+    }).sort({ dotBalls: -1 });
 
     res.status(200).json({
       success: true,
@@ -89,9 +89,7 @@ export const getTopPerformers = async (req, res) => {
 
 export const getDashboardStats = async (req, res) => {
   try {
-
     const players = await Player.find();
-
 
     const totalPlayers = players.length;
 
@@ -103,7 +101,6 @@ export const getDashboardStats = async (req, res) => {
     );
 
     const totalMatches = await Match.countDocuments();
-
 
     res.status(200).json({
       success: true,

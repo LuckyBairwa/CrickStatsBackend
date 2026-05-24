@@ -96,6 +96,69 @@ export const updatePlayer = async (req, res) => {
   }
 };
 
+// ✅ Bulk update players stats after match
+export const updatePlayersAfterMatch = async (req, res) => {
+  try {
+    const { players } = req.body;
+
+    const updatePromises = players.map(async (p) => {
+      // ✅ Pehle current player fetch karo
+      const currentPlayer = await Player.findById(p._id);
+      if (!currentPlayer) return;
+
+      const newRuns = (currentPlayer.runs || 0) + (p.runs || 0);
+      const newBalls = (currentPlayer.ballsPlayed || 0) + (p.ballsPlayed || 0);
+      const newRunsGiven = (currentPlayer.runsGiven || 0) + (p.runsGiven || 0);
+      const newOversBowled = (currentPlayer.oversBowled || 0) + (p.oversBowled || 0);
+      const oversInDecimal = newOversBowled / 6;
+
+      // ✅ Strike rate aur economy calculate karo
+      const newStrikeRate = newBalls > 0
+        ? parseFloat(((newRuns / newBalls) * 100).toFixed(2))
+        : 0;
+
+      const newEconomy = oversInDecimal > 0
+        ? parseFloat((newRunsGiven / oversInDecimal).toFixed(2))
+        : 0;
+
+      return Player.findByIdAndUpdate(
+        p._id,
+        {
+          $inc: {
+            runs: p.runs || 0,
+            wickets: p.wickets || 0,
+            fours: p.fours || 0,
+            sixes: p.sixes || 0,
+            ballsPlayed: p.ballsPlayed || 0,
+            dotBalls: p.dotBalls || 0,
+            runsGiven: p.runsGiven || 0,
+            oversBowled: p.oversBowled || 0,
+            matchesPlayed: 1,
+          },
+          $set: {
+            strikeRate: newStrikeRate,  // ✅ Calculated value
+            economy: newEconomy,        // ✅ Calculated value
+          },
+        },
+        { new: true }
+      );
+    });
+
+    await Promise.all(updatePromises);
+
+    res.status(200).json({
+      success: true,
+      message: "✅ Players updated successfully",
+    });
+  } catch (error) {
+    console.log("❌ UPDATE PLAYERS ERROR:", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 // 😎 Delete Player
 export const deletePlayer = async (req, res) => {
   try {
