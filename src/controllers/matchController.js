@@ -42,15 +42,50 @@ export const createMatch = async (req, res) => {
       teamA,
       teamB,
       overs,
-      matchDate,
-      matchTime,
-      venue,
-      status: "Upcoming",
+      matchDate: matchDate || Date.now(),
+      matchTime: matchTime || "",
+      venue: venue || "Home Ground",
+      status: "Not Started",
     });
+
+    const populatedMatch = await Match.findById(match._id)
+      .populate('teamA')
+      .populate('teamB');
 
     res.status(201).json({
       success: true,
       message: "🏏 Match Created Successfully",
+      match,
+    });
+  } catch (error) {
+   console.log('❌ CREATE MATCH ERROR:', error.message);
+  console.log('❌ FULL ERROR:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ✅ Update Match (Final Save)
+export const updateMatch = async (req, res) => {
+  try {
+    const match = await Match.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true },
+    );
+
+    if (!match) {
+      return res.status(404).json({
+        success: false,
+        message: "Match not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "✅ Match Saved Successfully",
       match,
     });
   } catch (error) {
@@ -216,96 +251,58 @@ export const startMatch = async (req, res) => {
   }
 };
 
-
 // ✅ Add Ball
-export const addBall = async (
-  req,
-  res,
-) => {
+export const addBall = async (req, res) => {
   try {
+    const { runs, extraType, isWicket, wicketType } = req.body;
 
-    const {
-      runs,
-      extraType,
-      isWicket,
-      wicketType,
-    } = req.body;
-
-    const match = await Match.findById(
-      req.params.id,
-    );
+    const match = await Match.findById(req.params.id);
 
     if (!match) {
       return res.status(404).json({
         success: false,
-        message: 'Match not found',
+        message: "Match not found",
       });
     }
 
     const innings =
-      match.currentInnings === 1
-        ? match.innings1
-        : match.innings2;
+      match.currentInnings === 1 ? match.innings1 : match.innings2;
 
     // Current Players 😎
-    const striker =
-      await Player.findById(
-        innings.currentStriker,
-      );
+    const striker = await Player.findById(innings.currentStriker);
 
-    const nonStriker =
-      innings.currentNonStriker
-        ? await Player.findById(
-            innings.currentNonStriker,
-          )
-        : null;
+    const nonStriker = innings.currentNonStriker
+      ? await Player.findById(innings.currentNonStriker)
+      : null;
 
-    const bowler =
-      await Player.findById(
-        innings.currentBowler,
-      );
+    const bowler = await Player.findById(innings.currentBowler);
 
     // Run scoring logic 😎
-    const result =
-      await addBallLogic({
-        innings,
-        striker,
-        nonStriker,
-        bowler,
-        runs,
-        isWicket,
-        wicketType,
-        extraType,
-      });
+    const result = await addBallLogic({
+      innings,
+      striker,
+      nonStriker,
+      bowler,
+      runs,
+      isWicket,
+      wicketType,
+      extraType,
+    });
 
     // Rotate Strike 😎
-    if (
-      result.rotateStrike &&
-      nonStriker
-    ) {
+    if (result.rotateStrike && nonStriker) {
+      const temp = innings.currentStriker;
 
-      const temp =
-        innings.currentStriker;
+      innings.currentStriker = innings.currentNonStriker;
 
-      innings.currentStriker =
-        innings.currentNonStriker;
-
-      innings.currentNonStriker =
-        temp;
+      innings.currentNonStriker = temp;
     }
 
     // Save ball history 😎
     innings.overHistory.push({
-      over:
-        Math.floor(
-          innings.oversPlayed,
-        ) + 1,
+      over: Math.floor(legalBalls / 6) + "." + (legalBalls % 6),
 
-      ball:
-        (
-          innings.overHistory.length %
-          6
-        ) + 1,
+      ball: (innings.legalBalls % 6) + 1,
 
       batsman: striker._id,
 
@@ -329,12 +326,10 @@ export const addBall = async (
 
     res.status(200).json({
       success: true,
-      message: '🏏 Ball Added',
+      message: "🏏 Ball Added",
       match,
     });
-
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,

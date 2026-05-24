@@ -6,6 +6,7 @@ import {
   getSingleMatch,
   tossMatch,
   startMatch,
+  updateMatch,
   addBall,
 } from '../controllers/matchController.js';
 
@@ -23,6 +24,8 @@ router.get('/', getMatches);
 // ✅ Get Single Match
 router.get('/:id', getSingleMatch);
 
+// ✅ Update Match
+router.put('/:id/save', updateMatch);
 
 // ✅ Toss Match
 router.put('/:id/toss', tossMatch);

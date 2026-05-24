@@ -317,7 +317,7 @@ const matchSchema = new mongoose.Schema(
 
     resultType: {
       type: String,
-      enum: ["Runs", "Wickets", "Tie", "No Result"],
+      enum: ["Runs", "Wickets", "Tie", "No Result", ""],
       default: "",
     },
 
