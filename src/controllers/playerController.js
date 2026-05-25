@@ -109,17 +109,17 @@ export const updatePlayersAfterMatch = async (req, res) => {
       const newRuns = (currentPlayer.runs || 0) + (p.runs || 0);
       const newBalls = (currentPlayer.ballsPlayed || 0) + (p.ballsPlayed || 0);
       const newRunsGiven = (currentPlayer.runsGiven || 0) + (p.runsGiven || 0);
-      const newOversBowled = (currentPlayer.oversBowled || 0) + (p.oversBowled || 0);
-      const oversInDecimal = newOversBowled / 6;
+      const newOversBowled =
+        (currentPlayer.oversBowled || 0) + (p.oversBowled || 0);
 
       // ✅ Strike rate aur economy calculate karo
-      const newStrikeRate = newBalls > 0
-        ? parseFloat(((newRuns / newBalls) * 100).toFixed(2))
-        : 0;
+      const newStrikeRate =
+        newBalls > 0 ? parseFloat(((newRuns / newBalls) * 100).toFixed(2)) : 0;
 
-      const newEconomy = oversInDecimal > 0
-        ? parseFloat((newRunsGiven / oversInDecimal).toFixed(2))
-        : 0;
+      const totalBalls = newOversBowled;
+      const overs = Math.floor(totalBalls / 6) + (totalBalls % 6) / 6;
+      const newEconomy =
+        overs > 0 ? parseFloat((newRunsGiven / overs).toFixed(2)) : 0;
 
       return Player.findByIdAndUpdate(
         p._id,
@@ -136,11 +136,11 @@ export const updatePlayersAfterMatch = async (req, res) => {
             matchesPlayed: 1,
           },
           $set: {
-            strikeRate: newStrikeRate,  // ✅ Calculated value
-            economy: newEconomy,        // ✅ Calculated value
+            strikeRate: newStrikeRate, // ✅ Calculated value
+            economy: newEconomy, // ✅ Calculated value
           },
         },
-        { new: true }
+        { new: true },
       );
     });
 
@@ -206,6 +206,15 @@ export const getTopPerformers = async (req, res) => {
       fours: -1,
     });
 
+    const bestEconomy = await Player.findOne({
+      oversBowled: { $gte: 6 }, // kam se kam 1 over
+      economy: { $gt: 0 },
+    }).sort({ economy: 1 });
+
+    const mostDotBalls = await Player.findOne().sort({
+      dotBalls: -1,
+    });
+
     res.status(200).json({
       success: true,
 
@@ -248,6 +257,19 @@ export const getTopPerformers = async (req, res) => {
           value: `${topFours?.fours || 0} Fours`,
 
           icon: "lightning-bolt",
+        },
+
+        {
+          title: "Best Economy",
+          player: bestEconomy?.name || "N/A",
+          value: `${bestEconomy?.economy || 0} Economy`,
+          icon: "speedometer",
+        },
+        {
+          title: "Most Dot Balls",
+          player: mostDotBalls?.name || "N/A",
+          value: `${mostDotBalls?.dotBalls || 0} Dot Balls`,
+          icon: "bullseye",
         },
       ],
     });

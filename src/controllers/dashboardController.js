@@ -5,30 +5,30 @@ export const getTopPerformers = async (req, res) => {
   try {
     const topRuns = await Player.findOne({
       ballsPlayed: { $gt: 0 },
-    }).sort({ runs: -1 });
+    }).sort({ runs: -1, _id: 1 });
 
     const topWickets = await Player.findOne({
       oversBowled: { $gt: 0 },
       wickets: { $gt: 0 },
-    }).sort({ wickets: -1 });
+    }).sort({ wickets: -1, _id: 1 });
 
     const topSixes = await Player.findOne({
       ballsPlayed: { $gt: 0 },
-    }).sort({ sixes: -1 });
+    }).sort({ sixes: -1, _id: 1 });
 
     const topFours = await Player.findOne({
       ballsPlayed: { $gt: 0 },
-    }).sort({ fours: -1 });
+    }).sort({ fours: -1, _id: 1 });
 
     const bestEconomy = await Player.findOne({
       oversBowled: { $gt: 0 },
       economy: { $gt: 0 },
-    }).sort({ economy: 1 });
+    }).sort({ economy: 1, _id: 1 });
 
     const mostDotBalls = await Player.findOne({
       oversBowled: { $gt: 0 },
       dotBalls: { $gt: 0 },
-    }).sort({ dotBalls: -1 });
+    }).sort({ dotBalls: -1, _id: 1 });
 
     res.status(200).json({
       success: true,

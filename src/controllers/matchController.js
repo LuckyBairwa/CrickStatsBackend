@@ -49,8 +49,8 @@ export const createMatch = async (req, res) => {
     });
 
     const populatedMatch = await Match.findById(match._id)
-      .populate('teamA')
-      .populate('teamB');
+      .populate("teamA")
+      .populate("teamB");
 
     res.status(201).json({
       success: true,
@@ -58,8 +58,158 @@ export const createMatch = async (req, res) => {
       match,
     });
   } catch (error) {
-   console.log('❌ CREATE MATCH ERROR:', error.message);
-  console.log('❌ FULL ERROR:', error);
+    console.log("❌ CREATE MATCH ERROR:", error.message);
+    console.log("❌ FULL ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+// ✅ Delete Match + Undo Player Stats
+export const deleteMatch = async (req, res) => {
+  try {
+    const match = await Match.findById(req.params.id);
+
+    if (!match) {
+      return res.status(404).json({
+        success: false,
+        message: "Match not found",
+      });
+    }
+
+    // ✅ Sirf completed/live matches ke liye stats undo karo
+    if (match.status === "Completed" || match.status === "Live") {
+      const allPlayers = [];
+
+      // ─── Helper: player ko list mein find ya add karo ───────────────
+      const getOrAdd = (playerId) => {
+        const existing = allPlayers.find(
+          (p) => p._id.toString() === playerId.toString(),
+        );
+        if (existing) return existing;
+
+        const newEntry = {
+          _id: playerId,
+          runs: 0,
+          fours: 0,
+          sixes: 0,
+          ballsPlayed: 0,
+          thirties: 0,
+          forties: 0,
+          wickets: 0,
+          dotBalls: 0,
+          runsGiven: 0,
+          oversBowled: 0,
+          catches: 0,
+        };
+        allPlayers.push(newEntry);
+        return newEntry;
+      };
+
+      // ─── Innings loop (1 aur 2 dono) ────────────────────────────────
+      [match.innings1, match.innings2].forEach((innings) => {
+        if (!innings) return;
+
+        // Batters — subtract karo
+        innings.batters?.forEach((b) => {
+          const p = getOrAdd(b.player);
+          p.runs -= b.runs || 0;
+          p.fours -= b.fours || 0;
+          p.sixes -= b.sixes || 0;
+          p.ballsPlayed -= b.balls || 0;
+          p.thirties -= b.thirties || 0;
+          p.forties -= b.forties || 0;
+        });
+
+        // Bowlers — subtract karo
+        innings.bowlers?.forEach((b) => {
+          const p = getOrAdd(b.player);
+          p.wickets -= b.wickets || 0;
+          p.dotBalls -= b.dotBalls || 0;
+          p.runsGiven -= b.runsGiven || 0;
+          p.oversBowled -= b.overs || 0;
+        });
+
+        // Fielders (catches) — subtract karo
+        innings.fielders?.forEach((f) => {
+          const p = getOrAdd(f.player);
+          p.catches -= f.catches || 0;
+        });
+      });
+
+      // ─── DB update ───────────────────────────────────────────────────
+      const updatePromises = allPlayers.map(async (p) => {
+        const cur = await Player.findById(p._id);
+        if (!cur) return;
+
+        // Safe values — kabhi negative nahi jaayenge
+        const newRuns = Math.max(0, (cur.runs || 0) + p.runs);
+        const newBalls = Math.max(0, (cur.ballsPlayed || 0) + p.ballsPlayed);
+        const newFours = Math.max(0, (cur.fours || 0) + p.fours);
+        const newSixes = Math.max(0, (cur.sixes || 0) + p.sixes);
+        const newThirties = Math.max(0, (cur.thirties || 0) + p.thirties);
+        const newForties = Math.max(0, (cur.forties || 0) + p.forties);
+        const newWickets = Math.max(0, (cur.wickets || 0) + p.wickets);
+        const newDotBalls = Math.max(0, (cur.dotBalls || 0) + p.dotBalls);
+        const newRunsGiven = Math.max(0, (cur.runsGiven || 0) + p.runsGiven);
+        const newOversBowled = Math.max(
+          0,
+          (cur.oversBowled || 0) + p.oversBowled,
+        );
+        const newCatches = Math.max(0, (cur.catches || 0) + p.catches);
+        const newMatchesPlayed = Math.max(0, (cur.matchesPlayed || 0) - 1);
+
+        // Strike rate
+        const newStrikeRate =
+          newBalls > 0
+            ? parseFloat(((newRuns / newBalls) * 100).toFixed(2))
+            : 0;
+
+        // Economy — balls ko proper overs mein convert karo
+        const completedOvers = Math.floor(newOversBowled / 6);
+        const remainingBalls = newOversBowled % 6;
+        const oversInDecimal = completedOvers + remainingBalls / 6;
+
+        const newEconomy =
+          oversInDecimal > 0
+            ? parseFloat((newRunsGiven / oversInDecimal).toFixed(2))
+            : 0;
+
+        // ✅ $set use karo — $inc bilkul nahi (double count hoga)
+        return Player.findByIdAndUpdate(p._id, {
+          $set: {
+            runs: newRuns,
+            ballsPlayed: newBalls,
+            fours: newFours,
+            sixes: newSixes,
+            thirties: newThirties,
+            forties: newForties,
+            wickets: newWickets,
+            dotBalls: newDotBalls,
+            runsGiven: newRunsGiven,
+            oversBowled: newOversBowled,
+            catches: newCatches,
+            matchesPlayed: newMatchesPlayed,
+            strikeRate: newStrikeRate,
+            economy: newEconomy,
+          },
+        });
+      });
+
+      await Promise.all(updatePromises);
+    }
+
+    await Match.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: "✅ Match deleted and player stats undone successfully",
+    });
+  } catch (error) {
+    console.log("❌ DELETE MATCH ERROR:", error.message);
     res.status(500).json({
       success: false,
       message: error.message,

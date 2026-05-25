@@ -82,13 +82,15 @@ export const addBallLogic = async ({
   // ===================================================
   // 😎 LEGAL BALL
   // ===================================================
-
   if (!isExtraBall) {
     innings.legalBalls += 1;
 
     striker.ballsPlayed += 1;
-
     batterStats.balls += 1;
+
+    // ✅ Ye add karo — bowler ke balls bhi yahi track honge
+    bowler.oversBowled += 1;
+    bowlerStats.balls = (bowlerStats.balls || 0) + 1;
   }
 
   // ===================================================
@@ -143,9 +145,9 @@ export const addBallLogic = async ({
   // 🎯 OVERS
   // ===================================================
 
-  bowler.oversBowled = innings.legalBalls / 6;
-
-  bowlerStats.overs = innings.legalBalls / 6;
+  bowlerStats.overs = `${Math.floor((bowlerStats.balls || 0) / 6)}.${
+    (bowlerStats.balls || 0) % 6
+  }`;
 
   innings.oversPlayed = `${Math.floor(innings.legalBalls / 6)}.${
     innings.legalBalls % 6
@@ -155,11 +157,23 @@ export const addBallLogic = async ({
   // 🎯 ECONOMY
   // ===================================================
 
-  bowler.economy =
-    bowler.oversBowled > 0 ? bowler.runsGiven / bowler.oversBowled : 0;
+  const bBalls = bowlerStats.balls || 0;
+  const bOversDecimal = Math.floor(bBalls / 6) + (bBalls % 6) / 6;
 
   bowlerStats.economy =
-    bowlerStats.overs > 0 ? bowlerStats.runsGiven / bowlerStats.overs : 0;
+    bOversDecimal > 0
+      ? parseFloat((bowlerStats.runsGiven / bOversDecimal).toFixed(2))
+      : 0;
+
+  // Player (bowler) global stats — legal ball section mein +1 ho chuka hai
+  // Sirf economy recalculate karo
+  const pBalls = bowler.oversBowled || 0;
+  const pOversDecimal = Math.floor(pBalls / 6) + (pBalls % 6) / 6;
+
+  bowler.economy =
+    pOversDecimal > 0
+      ? parseFloat((bowler.runsGiven / pOversDecimal).toFixed(2))
+      : 0;
 
   // ===================================================
   // 🤝 PARTNERSHIP
