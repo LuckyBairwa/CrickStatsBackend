@@ -67,7 +67,6 @@ export const createMatch = async (req, res) => {
   }
 };
 
-
 // ✅ Delete Match + Undo Player Stats
 export const deleteMatch = async (req, res) => {
   try {
@@ -257,12 +256,75 @@ export const getMatches = async (req, res) => {
       .populate("innings1.bowlingTeam")
       .populate("innings2.battingTeam")
       .populate("innings2.bowlingTeam")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const playerIdSet = new Set();
+
+    matches.forEach((match) => {
+      match.innings1?.batters?.forEach(
+        (b) => b.player && playerIdSet.add(String(b.player)),
+      );
+      match.innings1?.bowlers?.forEach(
+        (b) => b.player && playerIdSet.add(String(b.player)),
+      );
+      match.innings2?.batters?.forEach(
+        (b) => b.player && playerIdSet.add(String(b.player)),
+      );
+      match.innings2?.bowlers?.forEach(
+        (b) => b.player && playerIdSet.add(String(b.player)),
+      );
+    });
+
+    const players = await Player.find({
+      _id: { $in: Array.from(playerIdSet) },
+    })
+      .select("name role")
+      .lean();
+
+    const playerMap = {};
+    players.forEach((p) => {
+      playerMap[String(p._id)] = p;
+    });
+
+    const populatedMatches = matches.map((match) => ({
+      ...match,
+      innings1: match.innings1
+        ? {
+            ...match.innings1,
+            batters:
+              match.innings1.batters?.map((b) => ({
+                ...b,
+                player: playerMap[String(b.player)] || b.player,
+              })) || [],
+            bowlers:
+              match.innings1.bowlers?.map((b) => ({
+                ...b,
+                player: playerMap[String(b.player)] || b.player,
+              })) || [],
+          }
+        : null,
+      innings2: match.innings2
+        ? {
+            ...match.innings2,
+            batters:
+              match.innings2.batters?.map((b) => ({
+                ...b,
+                player: playerMap[String(b.player)] || b.player,
+              })) || [],
+            bowlers:
+              match.innings2.bowlers?.map((b) => ({
+                ...b,
+                player: playerMap[String(b.player)] || b.player,
+              })) || [],
+          }
+        : null,
+    }));
 
     res.status(200).json({
       success: true,
-      count: matches.length,
-      matches,
+      count: populatedMatches.length,
+      matches: populatedMatches,
     });
   } catch (error) {
     res.status(500).json({
@@ -283,7 +345,11 @@ export const getSingleMatch = async (req, res) => {
       .populate("innings1.currentBowler")
       .populate("innings2.currentStriker")
       .populate("innings2.currentNonStriker")
-      .populate("innings2.currentBowler");
+      .populate("innings2.currentBowler")
+      .populate({ path: "innings1.batters.player", select: "name role" })
+      .populate({ path: "innings1.bowlers.player", select: "name role" })
+      .populate({ path: "innings2.batters.player", select: "name role" })
+      .populate({ path: "innings2.bowlers.player", select: "name role" });
 
     if (!match) {
       return res.status(404).json({
