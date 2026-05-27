@@ -173,8 +173,8 @@ export const deleteMatch = async (req, res) => {
         const oversInDecimal = completedOvers + remainingBalls / 6;
 
         const newEconomy =
-          oversInDecimal > 0
-            ? parseFloat((newRunsGiven / oversInDecimal).toFixed(2))
+          newOversBowled > 0
+            ? parseFloat((newRunsGiven / newOversBowled).toFixed(2))
             : 0;
 
         // ✅ $set use karo — $inc bilkul nahi (double count hoga)

@@ -119,7 +119,9 @@ export const updatePlayersAfterMatch = async (req, res) => {
       const totalBalls = newOversBowled;
       const overs = Math.floor(totalBalls / 6) + (totalBalls % 6) / 6;
       const newEconomy =
-        overs > 0 ? parseFloat((newRunsGiven / overs).toFixed(2)) : 0;
+        newOversBowled > 0
+          ? parseFloat((newRunsGiven / newOversBowled).toFixed(2))
+          : 0;
 
       return Player.findByIdAndUpdate(
         p._id,
