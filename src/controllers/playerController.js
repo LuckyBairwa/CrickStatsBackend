@@ -135,11 +135,12 @@ export const updatePlayersAfterMatch = async (req, res) => {
             dotBalls: p.dotBalls || 0,
             runsGiven: p.runsGiven || 0,
             oversBowled: p.oversBowled || 0,
+            catches: p.catches || 0,
             matchesPlayed: 1,
           },
           $set: {
-            strikeRate: newStrikeRate, // ✅ Calculated value
-            economy: newEconomy, // ✅ Calculated value
+            strikeRate: newStrikeRate, 
+            economy: newEconomy, 
           },
         },
         { new: true },
